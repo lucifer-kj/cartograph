@@ -1,96 +1,101 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 
 export type ThemeMode = "system" | "light" | "dark";
 
+function subscribeTheme(callback: () => void) {
+  window.addEventListener("storage", callback);
+  window.addEventListener("cartograph-theme-change", callback);
+  return () => {
+    window.removeEventListener("storage", callback);
+    window.removeEventListener("cartograph-theme-change", callback);
+  };
+}
+
+function getThemeSnapshot(): ThemeMode {
+  return (localStorage.getItem("cartograph-theme") as ThemeMode) || "system";
+}
+
+function getThemeServerSnapshot(): ThemeMode {
+  return "system";
+}
+
 export function ThemeToggle() {
-  const [theme, setTheme] = useState<ThemeMode>(() => {
-    if (typeof window !== "undefined") {
-      return (localStorage.getItem("cartograph-theme") as ThemeMode) || "system";
-    }
-    return "system";
-  });
+  const theme = useSyncExternalStore(
+    subscribeTheme,
+    getThemeSnapshot,
+    getThemeServerSnapshot
+  );
 
   function applyTheme(next: ThemeMode) {
-    setTheme(next);
     localStorage.setItem("cartograph-theme", next);
+    window.dispatchEvent(new Event("cartograph-theme-change"));
+
+    const isDark =
+      next === "dark" ||
+      (next === "system" &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches);
 
     const root = document.documentElement;
     root.setAttribute("data-theme", next);
 
-    let isDark = false;
-    if (next === "dark") {
-      isDark = true;
-    } else if (next === "light") {
-      isDark = false;
-    } else {
-      isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    }
-
     if (isDark) {
       root.classList.add("dark");
-      root.classList.remove("light");
     } else {
       root.classList.remove("dark");
-      root.classList.add("light");
     }
   }
 
   useEffect(() => {
-    if (theme !== "system") return;
-
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
     const handler = (e: MediaQueryListEvent) => {
-      const root = document.documentElement;
-      if (e.matches) {
-        root.classList.add("dark");
-        root.classList.remove("light");
-      } else {
-        root.classList.remove("dark");
-        root.classList.add("light");
+      const current = localStorage.getItem("cartograph-theme") || "system";
+      if (current === "system") {
+        if (e.matches) {
+          document.documentElement.classList.add("dark");
+        } else {
+          document.documentElement.classList.remove("dark");
+        }
       }
     };
 
-    mediaQuery.addEventListener("change", handler);
-    return () => mediaQuery.removeEventListener("change", handler);
-  }, [theme]);
+    media.addEventListener("change", handler);
+    return () => media.removeEventListener("change", handler);
+  }, []);
 
   return (
-    <div className="flex items-center rounded border border-surface-border bg-surface p-0.5 text-xs font-mono">
+    <div className="flex items-center gap-2.5 text-xs font-mono">
       <button
         type="button"
         onClick={() => applyTheme("system")}
-        className={`px-2 py-0.5 rounded text-xs transition-colors cursor-pointer ${
+        className={`cursor-pointer transition-colors ${
           theme === "system"
-            ? "bg-background font-medium text-foreground shadow-xs border border-surface-border"
-            : "text-muted hover:text-foreground"
+            ? "text-zinc-900 dark:text-zinc-100 font-semibold"
+            : "text-zinc-400 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300"
         }`}
-        title="Follow system color preference"
       >
         system
       </button>
       <button
         type="button"
         onClick={() => applyTheme("light")}
-        className={`px-2 py-0.5 rounded text-xs transition-colors cursor-pointer ${
+        className={`cursor-pointer transition-colors ${
           theme === "light"
-            ? "bg-background font-medium text-foreground shadow-xs border border-surface-border"
-            : "text-muted hover:text-foreground"
+            ? "text-zinc-900 dark:text-zinc-100 font-semibold"
+            : "text-zinc-400 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300"
         }`}
-        title="Force light theme"
       >
         light
       </button>
       <button
         type="button"
         onClick={() => applyTheme("dark")}
-        className={`px-2 py-0.5 rounded text-xs transition-colors cursor-pointer ${
+        className={`cursor-pointer transition-colors ${
           theme === "dark"
-            ? "bg-background font-medium text-foreground shadow-xs border border-surface-border"
-            : "text-muted hover:text-foreground"
+            ? "text-zinc-900 dark:text-zinc-100 font-semibold"
+            : "text-zinc-400 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300"
         }`}
-        title="Force dark theme"
       >
         dark
       </button>

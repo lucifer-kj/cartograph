@@ -15,53 +15,41 @@ interface AppShellProps {
 }
 
 /**
- * Dense developer tool shell for Cartograph.
- * 
- * Provides:
- * - Top control bar: app identifier, organization switcher with invitation access, theme toggle, and account button.
- * - Workspace area: renders server-side verified team context and acts as the container for subsequent phases.
+ * Minimal developer tool shell matching image 3.
+ * Clean, lightweight top navigation and plain text workspace info.
  */
 export function AppShell({ currentOrg, children }: AppShellProps) {
   return (
-    <div className="flex h-screen w-full flex-col bg-background text-foreground overflow-hidden font-sans">
-      {/* Top control bar: dense 40px height */}
-      <header className="flex h-10 shrink-0 items-center justify-between border-b border-surface-border bg-surface px-3">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <span className="font-mono text-xs font-bold tracking-wider uppercase text-foreground">
-              CARTOGRAPH
-            </span>
-            <span className="font-mono text-[10px] text-muted border border-surface-border px-1 py-0.2 rounded">
-              phase-01
-            </span>
-          </div>
+    <div className="min-h-screen flex flex-col bg-white dark:bg-[#0a0a0a] text-zinc-900 dark:text-zinc-100 font-sans">
+      {/* Top Header */}
+      <header className="flex h-11 shrink-0 items-center justify-between border-b border-zinc-200 dark:border-zinc-800 px-4">
+        <div className="flex items-center gap-2.5">
+          <span className="rounded bg-blue-500/10 dark:bg-blue-600/20 px-2 py-0.5 font-mono text-xs font-semibold text-blue-600 dark:text-blue-400">
+            cartograph
+          </span>
 
-          <span className="text-surface-border">/</span>
+          <span className="text-zinc-400 dark:text-zinc-600 text-sm font-light">/</span>
 
-          {/* Organization Switcher: personal accounts hidden, team management & invites built-in */}
-          <div className="flex items-center">
-            <OrganizationSwitcher
-              hidePersonal={true}
-              createOrganizationMode="modal"
-              organizationProfileMode="modal"
-              afterCreateOrganizationUrl="/"
-              afterSelectOrganizationUrl="/"
-              afterLeaveOrganizationUrl="/"
-              appearance={{
-                elements: {
-                  rootBox: "flex items-center",
-                  organizationSwitcherTrigger:
-                    "flex items-center gap-1.5 px-2 py-1 rounded text-xs font-mono text-foreground hover:bg-surface-border/50 border border-surface-border transition-colors cursor-pointer",
-                  organizationPreviewTextContainer: "text-xs font-mono",
-                },
-              }}
-            />
-          </div>
+          <OrganizationSwitcher
+            hidePersonal={true}
+            createOrganizationMode="modal"
+            organizationProfileMode="modal"
+            afterCreateOrganizationUrl="/"
+            afterSelectOrganizationUrl="/"
+            afterLeaveOrganizationUrl="/"
+            appearance={{
+              elements: {
+                rootBox: "flex items-center",
+                organizationSwitcherTrigger:
+                  "flex items-center gap-1.5 text-xs text-zinc-900 dark:text-zinc-100 hover:opacity-80 transition-opacity cursor-pointer font-sans",
+                organizationPreviewTextContainer: "text-xs font-medium",
+              },
+            }}
+          />
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-4">
           <ThemeToggle />
-          <div className="h-4 w-px bg-surface-border" />
           <UserButton
             appearance={{
               elements: {
@@ -72,55 +60,21 @@ export function AppShell({ currentOrg, children }: AppShellProps) {
         </div>
       </header>
 
-      {/* Main Workspace Frame */}
-      <main className="flex flex-1 flex-col overflow-auto bg-background p-4">
+      {/* Main minimal workspace content */}
+      <main className="flex-1 p-6">
         {children ? (
           children
         ) : (
-          <div className="flex flex-col gap-4 max-w-4xl">
-            {/* Server Render Verification Panel */}
-            <div className="rounded border border-surface-border bg-surface p-4">
-              <div className="flex items-center justify-between border-b border-surface-border pb-2.5 mb-3">
-                <div className="flex items-center gap-2">
-                  <span className="inline-block h-2 w-2 rounded-full bg-inflow" />
-                  <span className="font-mono text-xs font-semibold text-foreground uppercase tracking-wide">
-                    Workspace Context
-                  </span>
-                </div>
-                <span className="font-mono text-[11px] text-muted">
-                  Server-rendered on first paint
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-mono">
-                <div className="flex flex-col gap-1 rounded border border-surface-border/60 bg-background p-2.5">
-                  <span className="text-[10px] text-muted uppercase">Active Team</span>
-                  <span className="font-semibold text-foreground">{currentOrg.name}</span>
-                  <span className="text-[11px] text-muted">{currentOrg.id}</span>
-                </div>
-
-                <div className="flex flex-col gap-1 rounded border border-surface-border/60 bg-background p-2.5">
-                  <span className="text-[10px] text-muted uppercase">Membership Role</span>
-                  <span className="font-semibold text-foreground">{currentOrg.role}</span>
-                  <span className="text-[11px] text-muted">
-                    {currentOrg.membersCount} {currentOrg.membersCount === 1 ? "member" : "members"}
-                  </span>
-                </div>
-              </div>
-
-              <div className="mt-3 pt-3 border-t border-surface-border/60 text-[11px] font-mono text-muted flex flex-col gap-1">
-                <div>
-                  • <span className="text-foreground">Identity & Claims:</span> Token carries active org{" "}
-                  <code className="text-foreground">{currentOrg.id}</code>.
-                </div>
-                <div>
-                  • <span className="text-foreground">Database Client:</span> Configured with Clerk Bearer token without secondary session cookies.
-                </div>
-                <div>
-                  • <span className="text-foreground">Invitations & Switching:</span> Managed through the team switcher in the top bar.
-                </div>
-              </div>
-            </div>
+          <div className="flex flex-col">
+            <span className="text-xs text-zinc-400 dark:text-zinc-500 mb-0.5">
+              Organization
+            </span>
+            <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-0.5">
+              {currentOrg.name}
+            </span>
+            <span className="font-mono text-xs text-zinc-400 dark:text-zinc-500">
+              {currentOrg.id}
+            </span>
           </div>
         )}
       </main>

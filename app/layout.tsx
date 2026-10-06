@@ -32,11 +32,11 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var s=localStorage.getItem('cartograph-theme')||'system';var d=false;if(s==='dark'){d=true;}else if(s==='light'){d=false;}else{d=window.matchMedia('(prefers-color-scheme: dark)').matches;}var r=document.documentElement;r.setAttribute('data-theme',s);if(d){r.classList.add('dark');r.classList.remove('light');}else{r.classList.remove('dark');r.classList.add('light');}}catch(e){}})();`,
+            __html: `(function(){try{var s=localStorage.getItem('cartograph-theme')||'system';var d=s==='dark'||(s==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(d){document.documentElement.classList.add('dark');}else{document.documentElement.classList.remove('dark');}}catch(e){}})();`,
           }}
         />
       </head>
-      <body className="min-h-full flex flex-col bg-background text-foreground antialiased">
+      <body className="min-h-full flex flex-col antialiased">
         <ClerkProvider>
           {children}
         </ClerkProvider>
