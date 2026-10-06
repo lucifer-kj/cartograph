@@ -2,17 +2,30 @@ import { auth, clerkClient } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { OrgAutoActivator } from "@/components/org-auto-activator";
+import { createServerClient } from "@/lib/supabase/server";
+
+export interface AnalysisRecord {
+  id: string;
+  commit_hash: string | null;
+  status: string;
+  stage: string | null;
+  error_message: string | null;
+  created_at: string;
+  projects: {
+    name: string;
+    repo_url: string;
+  } | null;
+}
 
 /**
- * Server component for the primary workspace.
- * 
- * Verifies that:
- * 1. An authenticated session exists (otherwise redirected to /sign-in).
- * 2. An active organization claim is present on the session token.
- *    If missing (e.g. brand new user on first sign-in), auto-creates or auto-selects
- *    the team organization without prompting the user, and activates it on the session.
- * 3. The current organization is read during server rendering and passed to the shell,
- *    ensuring it is rendered in the initial HTML on first paint.
+ * Phase 2 Dashboard Page.
+ *
+ * Requirements:
+ * - Queries analyses belonging to the active organization.
+ * - DOES NOT filter by organization in application code. RLS policies in Postgres
+ *   filter rows based on the organization claim in the auth token.
+ * - Displays the list of analyses, each one's status/state, or an empty state
+ *   for an organization that has never run one.
  */
 export default async function HomePage() {
   const { userId, orgId, orgRole, orgSlug } = await auth();
@@ -49,7 +62,6 @@ export default async function HomePage() {
       targetOrgId = newOrg.id;
     }
 
-    // Activate the organization claim on the client session and refresh
     return <OrgAutoActivator organizationId={targetOrgId} />;
   }
 
@@ -58,6 +70,24 @@ export default async function HomePage() {
   const org = await clerk.organizations.getOrganization({
     organizationId: orgId,
   });
+
+  // Query analyses. No application-level org filtering: Postgres RLS policy filters rows.
+  const supabase = await createServerClient();
+  const { data: analyses, error } = await supabase
+    .from("analyses")
+    .select(`
+      id,
+      commit_hash,
+      status,
+      stage,
+      error_message,
+      created_at,
+      projects (
+        name,
+        repo_url
+      )
+    `)
+    .order("created_at", { ascending: false });
 
   return (
     <AppShell
@@ -68,6 +98,8 @@ export default async function HomePage() {
         role: orgRole || "org:member",
         membersCount: org.membersCount || 1,
       }}
+      analyses={(analyses as unknown as AnalysisRecord[]) || []}
+      queryError={error ? error.message : null}
     />
   );
 }
